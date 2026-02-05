@@ -20,7 +20,7 @@ It acts as a **data-quality firewall** for the entire project.
 """)
 
 # =================================================
-# 1️⃣ Data existence
+# 1️⃣ Data availability
 # =================================================
 st.subheader("1️⃣ Data Availability")
 
@@ -58,10 +58,10 @@ if st.button("🔄 Download & Regenerate DXY Data"):
         dxy.to_csv("data/dxy_clean.csv")
 
     st.success("✅ Data successfully refreshed")
-    st.experimental_rerun()
+    st.rerun()   # ✅ FIXED LINE
 
 # =================================================
-# Stop if data still not available
+# Stop execution if data not available
 # =================================================
 if not data_exists():
     st.stop()
