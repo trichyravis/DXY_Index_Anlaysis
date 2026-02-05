@@ -1,7 +1,1 @@
 
-| Column    | Meaning                |
-| --------- | ---------------------- |
-| `DXY`     | DXY closing value      |
-| `Returns` | Daily % returns        |
-| `MA_50`   | 50-day moving average  |
-| `MA_200`  | 200-day moving average |
