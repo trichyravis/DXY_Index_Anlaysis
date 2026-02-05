@@ -9,14 +9,24 @@ from utils.validator import (
     load_data,
     validate_columns,
     data_health,
-    last_updated
+    last_updated,
+    file_checksum
 )
 
+# -------------------------------------------------
+# Session state initialization
+# -------------------------------------------------
+if "data_ready" not in st.session_state:
+    st.session_state["data_ready"] = False
+
+# -------------------------------------------------
+# Page header
+# -------------------------------------------------
 st.header("📁 Data Status & Readiness (Gatekeeper)")
 
 st.markdown("""
-This tab **must pass all checks** before any analysis is performed.
-It acts as a **data-quality firewall** for the entire project.
+This tab acts as a **mandatory data-quality gate**.  
+All analysis tabs remain **locked** until the dataset passes every check below.
 """)
 
 # =================================================
@@ -26,17 +36,17 @@ st.subheader("1️⃣ Data Availability")
 
 if not data_exists():
     st.error("❌ dxy_clean.csv not found")
-    st.info("Use the **Refresh Data** button below to generate it.")
+    st.info("Use the **Refresh / Regenerate Data** button below to create it.")
 else:
     st.success("✅ dxy_clean.csv detected")
 
 # =================================================
-# 2️⃣ Data refresh button
+# 2️⃣ Data refresh / regenerate button
 # =================================================
-st.subheader("2️⃣ Refresh / Regenerate Data")
+st.subheader("2️⃣ Refresh / Regenerate DXY Data")
 
 if st.button("🔄 Download & Regenerate DXY Data"):
-    with st.spinner("Downloading DXY data..."):
+    with st.spinner("Downloading and processing DXY data..."):
         dxy = yf.download(
             "DX-Y.NYB",
             start="2000-01-01",
@@ -58,12 +68,13 @@ if st.button("🔄 Download & Regenerate DXY Data"):
         dxy.to_csv("data/dxy_clean.csv")
 
     st.success("✅ Data successfully refreshed")
-    st.rerun()   # ✅ FIXED LINE
+    st.rerun()
 
-# =================================================
-# Stop execution if data not available
-# =================================================
+# -------------------------------------------------
+# Stop execution if data still not available
+# -------------------------------------------------
 if not data_exists():
+    st.session_state["data_ready"] = False
     st.stop()
 
 # =================================================
@@ -101,9 +112,15 @@ c4.metric("Missing Values", health["missing_values"])
 st.caption(f"📌 Last updated: {last_updated()}")
 
 # =================================================
-# 5️⃣ Unit-test–like checks
+# 5️⃣ File integrity (checksum)
 # =================================================
-st.subheader("5️⃣ Data Quality Tests")
+st.subheader("5️⃣ File Integrity Check (Checksum)")
+st.code(file_checksum(), language="text")
+
+# =================================================
+# 6️⃣ Unit-test–like data quality checks
+# =================================================
+st.subheader("6️⃣ Data Quality Tests")
 
 tests = {
     "File exists": data_exists(),
@@ -121,11 +138,37 @@ test_results = pd.DataFrame({
 st.table(test_results)
 
 # =================================================
-# Final readiness flag
+# 7️⃣ Graded rubric (assessment-ready)
+# =================================================
+st.subheader("🎓 Graded Rubric – Data Engineering (10 Marks)")
+
+rubric = {
+    "Data file exists (2)": data_exists(),
+    "Correct columns (2)": col_check["valid"],
+    "No missing values (2)": health["missing_values"] == 0,
+    "Datetime index (2)": str(type(df.index)).endswith("DatetimeIndex'>"),
+    "Sufficient observations (2)": health["rows"] > 500
+}
+
+score = sum(2 for v in rubric.values() if v)
+
+rubric_df = pd.DataFrame({
+    "Criterion": rubric.keys(),
+    "Status": ["✔" if v else "✘" for v in rubric.values()],
+    "Marks Awarded": [2 if v else 0 for v in rubric.values()]
+})
+
+st.table(rubric_df)
+st.metric("Total Score", f"{score} / 10")
+
+# =================================================
+# 8️⃣ Final readiness flag (locks other tabs)
 # =================================================
 st.subheader("🚦 Final Readiness Status")
 
 if all(tests.values()):
-    st.success("🚀 DATA READY — You may proceed to analysis tabs")
+    st.success("🚀 DATA READY — Analysis tabs are now unlocked")
+    st.session_state["data_ready"] = True
 else:
-    st.error("⛔ DATA NOT READY — Fix issues above before continuing")
+    st.error("⛔ DATA NOT READY — Fix issues above")
+    st.session_state["data_ready"] = False
