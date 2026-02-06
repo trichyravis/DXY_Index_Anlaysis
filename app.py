@@ -982,10 +982,31 @@ def tab_advanced_analysis(df, corr_assets, ma_short, ma_long, period, start_date
                 corr_rank_df = dxy_corr.to_frame("Correlation with DXY").reset_index()
                 corr_rank_df.columns = ["Asset", "Correlation"]
                 corr_rank_df = corr_rank_df.sort_values("Correlation", ascending=False)
+
+                def color_correlation(val):
+                    """Apply red-white-blue color based on correlation value"""
+                    if pd.isna(val):
+                        return ""
+                    # Normalize to 0-1 range: -1 → 0, 0 → 0.5, +1 → 1
+                    norm = (val + 1) / 2
+                    if val >= 0:
+                        # White to Blue
+                        r = int(255 * (1 - norm * 0.8))
+                        g = int(255 * (1 - norm * 0.6))
+                        b = 255
+                    else:
+                        # Red to White
+                        r = 255
+                        g = int(255 * norm * 1.6)
+                        b = int(255 * norm * 1.6)
+                    r, g, b = min(255, max(0, r)), min(255, max(0, g)), min(255, max(0, b))
+                    text_color = "white" if abs(val) > 0.5 else "#003366"
+                    return f"background-color: rgb({r},{g},{b}); color: {text_color}; font-weight: bold"
+
                 st.dataframe(
-                    corr_rank_df.style.format({"Correlation": "{:.4f}"}).background_gradient(
-                        cmap="RdBu_r", subset=["Correlation"], vmin=-1, vmax=1
-                    ),
+                    corr_rank_df.style
+                        .format({"Correlation": "{:.4f}"})
+                        .map(color_correlation, subset=["Correlation"]),
                     use_container_width=True, hide_index=True
                 )
             else:
