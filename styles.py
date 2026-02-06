@@ -94,52 +94,178 @@ def get_main_css() -> str:
     """
 
 def get_sidebar_css() -> str:
-    """Sidebar styling - dark blue gradient"""
+    """Sidebar styling - dark blue gradient with properly visible widgets"""
     return f"""
+    /* ── Sidebar Background ── */
     [data-testid="stSidebar"] {{
         background: {SIDEBAR_CONFIG['background_gradient']} !important;
     }}
     
-    [data-testid="stSidebar"] * {{
+    /* ── General Sidebar Text ── */
+    [data-testid="stSidebar"] .stMarkdown p,
+    [data-testid="stSidebar"] .stMarkdown li,
+    [data-testid="stSidebar"] .stMarkdown strong,
+    [data-testid="stSidebar"] .stMarkdown b {{
         color: {SIDEBAR_CONFIG['text_color']} !important;
     }}
     
+    /* ── Sidebar Headers ── */
+    [data-testid="stSidebar"] h1,
     [data-testid="stSidebar"] h2,
     [data-testid="stSidebar"] h3,
+    [data-testid="stSidebar"] h4,
     [data-testid="stSidebar"] .stMarkdown h1,
     [data-testid="stSidebar"] .stMarkdown h2,
     [data-testid="stSidebar"] .stMarkdown h3 {{
-        color: {SIDEBAR_CONFIG['header_text_color']} !important;
+        color: {COLORS['accent_gold']} !important;
         font-weight: {TYPOGRAPHY['extra_bold']} !important;
         text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+        letter-spacing: 0.5px;
     }}
     
-    [data-testid="stSidebar"] p,
-    [data-testid="stSidebar"] span,
-    [data-testid="stSidebar"] div {{
-        color: {SIDEBAR_CONFIG['text_color']} !important;
+    /* ── Widget Labels (Selectbox, Slider, Radio labels) ── */
+    [data-testid="stSidebar"] label,
+    [data-testid="stSidebar"] .stSelectbox label,
+    [data-testid="stSidebar"] .stMultiSelect label,
+    [data-testid="stSidebar"] .stSlider label,
+    [data-testid="stSidebar"] .stRadio label,
+    [data-testid="stSidebar"] .stDateInput label,
+    [data-testid="stSidebar"] [data-testid="stWidgetLabel"] {{
+        color: {COLORS['accent_gold']} !important;
+        font-weight: {TYPOGRAPHY['semibold']} !important;
+        font-size: 14px !important;
     }}
     
+    /* ── Selectbox & Multiselect — Closed State (selected value display) ── */
+    [data-testid="stSidebar"] .stSelectbox [data-baseweb="select"] > div,
+    [data-testid="stSidebar"] .stMultiSelect [data-baseweb="select"] > div {{
+        background-color: rgba(255, 255, 255, 0.12) !important;
+        border: 1.5px solid rgba(255, 215, 0, 0.5) !important;
+        border-radius: 8px !important;
+        color: white !important;
+    }}
+    
+    /* ── Selectbox & Multiselect — Selected text visible ── */
+    [data-testid="stSidebar"] .stSelectbox [data-baseweb="select"] span,
+    [data-testid="stSidebar"] .stSelectbox [data-baseweb="select"] div[class*="ValueContainer"] span,
+    [data-testid="stSidebar"] .stMultiSelect [data-baseweb="select"] span {{
+        color: white !important;
+    }}
+    
+    /* ── Multiselect Tags (pills) ── */
+    [data-testid="stSidebar"] .stMultiSelect [data-baseweb="tag"] {{
+        background-color: rgba(255, 215, 0, 0.25) !important;
+        border: 1px solid {COLORS['accent_gold']} !important;
+        border-radius: 6px !important;
+    }}
+    [data-testid="stSidebar"] .stMultiSelect [data-baseweb="tag"] span {{
+        color: white !important;
+        font-size: 13px !important;
+    }}
+    
+    /* ── Dropdown Menu (Open State) — CRITICAL for visibility ── */
+    [data-testid="stSidebar"] [data-baseweb="popover"],
+    [data-testid="stSidebar"] [data-baseweb="menu"],
+    [data-testid="stSidebar"] ul[role="listbox"] {{
+        background-color: #001a33 !important;
+        border: 1.5px solid {COLORS['accent_gold']} !important;
+        border-radius: 8px !important;
+    }}
+    
+    /* ── Dropdown Options ── */
+    [data-testid="stSidebar"] [data-baseweb="menu"] li,
+    [data-testid="stSidebar"] ul[role="listbox"] li,
+    [data-testid="stSidebar"] [role="option"] {{
+        color: white !important;
+        background-color: transparent !important;
+        padding: 8px 12px !important;
+        font-size: 14px !important;
+    }}
+    
+    /* ── Dropdown Option Hover ── */
+    [data-testid="stSidebar"] [data-baseweb="menu"] li:hover,
+    [data-testid="stSidebar"] ul[role="listbox"] li:hover,
+    [data-testid="stSidebar"] [role="option"]:hover,
+    [data-testid="stSidebar"] [data-baseweb="menu"] li[aria-selected="true"] {{
+        background-color: rgba(255, 215, 0, 0.2) !important;
+        color: {COLORS['accent_gold']} !important;
+    }}
+    
+    /* ── Radio Buttons ── */
+    [data-testid="stSidebar"] .stRadio > div {{
+        background-color: rgba(255, 255, 255, 0.06) !important;
+        border-radius: 8px !important;
+        padding: 8px !important;
+    }}
+    [data-testid="stSidebar"] .stRadio label span,
+    [data-testid="stSidebar"] .stRadio div[role="radiogroup"] label {{
+        color: white !important;
+        font-weight: {TYPOGRAPHY['normal']} !important;
+    }}
     [data-testid="stSidebar"] [role="radio"] {{
         accent-color: {COLORS['accent_gold']} !important;
     }}
     
-    [data-testid="stSidebar"] .stRadio > label {{
-        color: {SIDEBAR_CONFIG['text_color']} !important;
-        font-weight: {TYPOGRAPHY['semibold']};
+    /* ── Sliders ── */
+    [data-testid="stSidebar"] .stSlider [data-baseweb="slider"] div[role="slider"] {{
+        background-color: {COLORS['accent_gold']} !important;
+    }}
+    [data-testid="stSidebar"] .stSlider [data-testid="stThumbValue"],
+    [data-testid="stSidebar"] .stSlider div[data-testid="stTickBarMin"],
+    [data-testid="stSidebar"] .stSlider div[data-testid="stTickBarMax"] {{
+        color: white !important;
     }}
     
+    /* ── Date Input ── */
+    [data-testid="stSidebar"] .stDateInput input {{
+        background-color: rgba(255, 255, 255, 0.12) !important;
+        border: 1.5px solid rgba(255, 215, 0, 0.5) !important;
+        border-radius: 8px !important;
+        color: white !important;
+    }}
+    
+    /* ── Button Styling ── */
+    [data-testid="stSidebar"] .stButton > button {{
+        background: linear-gradient(135deg, {COLORS['accent_gold']} 0%, #FFC700 100%) !important;
+        color: #001a33 !important;
+        font-weight: {TYPOGRAPHY['extra_bold']} !important;
+        font-size: 16px !important;
+        border: none !important;
+        border-radius: 10px !important;
+        padding: 0.65rem 1.5rem !important;
+        letter-spacing: 1px !important;
+        box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3) !important;
+        transition: all 0.3s ease !important;
+    }}
+    [data-testid="stSidebar"] .stButton > button:hover {{
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 20px rgba(255, 215, 0, 0.5) !important;
+    }}
+    
+    /* ── Sidebar Dividers ── */
     [data-testid="stSidebar"] hr {{
-        border-color: {SIDEBAR_CONFIG['divider_color']} !important;
+        border-color: rgba(255, 215, 0, 0.25) !important;
+        margin: 0.8rem 0 !important;
     }}
     
+    /* ── Sidebar Links ── */
     [data-testid="stSidebar"] a {{
         color: {SIDEBAR_CONFIG['link_color']} !important;
     }}
-    
     [data-testid="stSidebar"] a:hover {{
         color: {SIDEBAR_CONFIG['link_hover_color']} !important;
         text-decoration: underline;
+    }}
+    
+    /* ── Help Tooltips ── */
+    [data-testid="stSidebar"] .stTooltipIcon svg {{
+        fill: rgba(255, 215, 0, 0.7) !important;
+    }}
+    
+    /* ── Selectbox Arrow Icon ── */
+    [data-testid="stSidebar"] .stSelectbox svg,
+    [data-testid="stSidebar"] .stMultiSelect svg {{
+        fill: {COLORS['accent_gold']} !important;
     }}
     """
 
