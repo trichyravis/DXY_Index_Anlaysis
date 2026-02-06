@@ -69,8 +69,12 @@ with st.sidebar:
 
     data_source = st.selectbox(
         "Select Provider",
-        ["Yahoo Finance (DX-Y.NYB)", "FRED (Trade-Weighted USD)"],
-        help="Yahoo Finance provides DXY futures; FRED provides the Trade-Weighted Broad Dollar Index (DTWEXBGS)"
+        [
+            "DXY Futures — Yahoo (DX-Y.NYB)",
+            "USD Index ETF — Invesco (UUP)",
+            "EUR/USD Inverse Proxy (EURUSD=X)"
+        ],
+        help="DX-Y.NYB = ICE DXY Futures | UUP = Invesco DB USD Index Bullish ETF | EURUSD=X = Euro/USD (inverse proxy, EUR is 57.6% of DXY)"
     )
 
     st.markdown("---")
@@ -157,71 +161,31 @@ with st.sidebar:
 # ═══════════════════════════════════════════════════════════════════════════════
 
 @st.cache_data(ttl=3600, show_spinner=False)
-def fetch_yahoo_data(period=None, start=None, end=None):
-    """Fetch DXY data from Yahoo Finance"""
-    ticker = yf.Ticker("DX-Y.NYB")
-    if period:
-        df = ticker.history(period=period)
-    else:
-        df = ticker.history(start=start, end=end)
-    if df.empty:
-        return pd.DataFrame()
-    df.index = df.index.tz_localize(None) if df.index.tz else df.index
-    df = df[["Open", "High", "Low", "Close", "Volume"]]
-    df.columns = ["Open", "High", "Low", "Close", "Volume"]
-    return df
-
-
-@st.cache_data(ttl=3600, show_spinner=False)
-def fetch_fred_data(start=None, end=None):
-    """Fetch Trade-Weighted USD Index from FRED via direct API (no pandas_datareader needed)"""
-    import requests
+def fetch_yahoo_data(ticker_symbol, period=None, start=None, end=None):
+    """Fetch OHLCV data from Yahoo Finance for any ticker"""
     try:
-        FRED_API_KEY = "DEMO_KEY"  # Replace with your own key from https://fred.stlouisfed.org/docs/api/api_key.html
-        series_id = "DTWEXBGS"
-        if start is None:
-            start = datetime(2015, 1, 1)
-        if end is None:
-            end = datetime.now()
-
-        url = (
-            f"https://api.stlouisfed.org/fred/series/observations"
-            f"?series_id={series_id}"
-            f"&api_key={FRED_API_KEY}"
-            f"&file_type=json"
-            f"&observation_start={start.strftime('%Y-%m-%d') if isinstance(start, datetime) else start}"
-            f"&observation_end={end.strftime('%Y-%m-%d') if isinstance(end, datetime) else end}"
-        )
-        resp = requests.get(url, timeout=15)
-        resp.raise_for_status()
-        data = resp.json()
-
-        observations = data.get("observations", [])
-        if not observations:
-            raise ValueError("No observations returned from FRED API.")
-
-        records = []
-        for obs in observations:
-            if obs["value"] != ".":
-                records.append({
-                    "Date": pd.to_datetime(obs["date"]),
-                    "Close": float(obs["value"])
-                })
-
-        df = pd.DataFrame(records).set_index("Date")
-        df["Open"] = df["Close"]
-        df["High"] = df["Close"]
-        df["Low"] = df["Close"]
-        df["Volume"] = 0
+        ticker = yf.Ticker(ticker_symbol)
+        if period:
+            df = ticker.history(period=period)
+        else:
+            df = ticker.history(start=start, end=end)
+        if df.empty:
+            return pd.DataFrame()
+        df.index = df.index.tz_localize(None) if df.index.tz else df.index
         df = df[["Open", "High", "Low", "Close", "Volume"]]
-        df.dropna(inplace=True)
+        df.columns = ["Open", "High", "Low", "Close", "Volume"]
         return df
-
     except Exception as e:
-        st.error(f"⚠️ FRED API fetch failed: {e}")
-        st.info("💡 **Tip:** For full FRED access, get a free API key at https://fred.stlouisfed.org/docs/api/api_key.html and replace `DEMO_KEY` in the code.")
-        st.warning("Falling back to Yahoo Finance (DX-Y.NYB)...")
-        return fetch_yahoo_data(period="5y")
+        st.error(f"⚠️ Failed to fetch {ticker_symbol}: {e}")
+        return pd.DataFrame()
+
+
+# Data source ticker mapping
+SOURCE_TICKER_MAP = {
+    "DXY Futures — Yahoo (DX-Y.NYB)": {"symbol": "DX-Y.NYB", "label": "Yahoo Finance — DXY Futures (DX-Y.NYB)"},
+    "USD Index ETF — Invesco (UUP)":   {"symbol": "UUP",      "label": "Yahoo Finance — Invesco DB USD Index ETF (UUP)"},
+    "EUR/USD Inverse Proxy (EURUSD=X)": {"symbol": "EURUSD=X", "label": "Yahoo Finance — EUR/USD (Inverse DXY Proxy)"},
+}
 
 
 @st.cache_data(ttl=3600, show_spinner=False)
@@ -375,18 +339,20 @@ def tab_about():
     st.markdown("""
     #### 📐 Methodology & Data Sources
 
-    This dashboard provides two primary data sources for analysis. **Yahoo Finance** delivers 
-    the ICE DXY futures contract (ticker: DX-Y.NYB) with OHLCV data suitable for technical analysis. 
-    **FRED** (Federal Reserve Economic Data) provides the Trade-Weighted U.S. Dollar Index: Broad (DTWEXBGS), 
-    which covers a wider basket of 26 currencies weighted by trade volumes — a more comprehensive measure 
-    of USD purchasing power.
+    This dashboard provides **three data sources** for analysis, all fetched reliably via Yahoo Finance:
 
-    Technical indicators computed include Simple Moving Averages (SMA), Bollinger Bands (±2σ), 
-    Relative Strength Index (RSI-14), and MACD (12-26-9). Risk metrics include annualized volatility, 
-    Value at Risk (parametric), maximum drawdown, and Sharpe ratio calculations.
+    | Source | Ticker | Description |
+    |--------|--------|-------------|
+    | **DXY Futures** | `DX-Y.NYB` | ICE U.S. Dollar Index Futures — the standard institutional DXY benchmark with full OHLCV data |
+    | **Invesco DB USD ETF** | `UUP` | Tracks the Deutsche Bank Long USD Currency Portfolio Index — a tradeable proxy for DXY |
+    | **EUR/USD Inverse Proxy** | `EURUSD=X` | Since the Euro constitutes 57.6% of DXY, EUR/USD moves inversely to the Dollar Index |
+
+    Technical indicators computed include Simple Moving Averages (SMA), Bollinger Bands (±2σ),
+    Relative Strength Index (RSI-14), and MACD (12-26-9). Risk metrics include annualized volatility,
+    Value at Risk (parametric), CVaR / Expected Shortfall, maximum drawdown, and Sharpe ratio calculations.
 
     #### ⚠️ Disclaimer
-    *This tool is for educational and analytical purposes only. It does not constitute financial advice. 
+    *This tool is for educational and analytical purposes only. It does not constitute financial advice.
     Past performance does not guarantee future results.*
     """)
 
@@ -822,18 +788,14 @@ if "dxy_data" not in st.session_state:
 # Fetch data on button click
 if run_btn:
     with st.spinner("🔄 Fetching DXY data..."):
-        if "Yahoo" in data_source:
-            if period:
-                raw = fetch_yahoo_data(period=period)
-            else:
-                raw = fetch_yahoo_data(start=start_date, end=end_date)
-            st.session_state.source_label = "Yahoo Finance (DX-Y.NYB)"
+        source_info = SOURCE_TICKER_MAP[data_source]
+        symbol = source_info["symbol"]
+        st.session_state.source_label = source_info["label"]
+
+        if period:
+            raw = fetch_yahoo_data(symbol, period=period)
         else:
-            if start_date and end_date:
-                raw = fetch_fred_data(start=start_date, end=end_date)
-            else:
-                raw = fetch_fred_data()
-            st.session_state.source_label = "FRED (DTWEXBGS)"
+            raw = fetch_yahoo_data(symbol, start=start_date, end=end_date)
 
         if not raw.empty:
             st.session_state.dxy_data = add_technical_indicators(raw, ma_short, ma_long)
