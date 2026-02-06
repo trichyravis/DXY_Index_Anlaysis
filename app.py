@@ -254,9 +254,13 @@ def compute_macd(series, fast=12, slow=26, signal=9):
 # ═══════════════════════════════════════════════════════════════════════════════
 
 def tab_about():
-    """Tab 1: About the Project"""
+    """Tab 1: About the Project — Comprehensive Feature Documentation"""
     st.markdown("## 📋 About the DXY Index Analytics Project")
     st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════
+    # SECTION 1: WHAT IS DXY
+    # ══════════════════════════════════════════════════════════════════════
 
     col1, col2 = st.columns([2, 1])
 
@@ -264,25 +268,31 @@ def tab_about():
         st.markdown("""
         #### What is the DXY (US Dollar Index)?
 
-        The **U.S. Dollar Index (DXY / USDX)** is a measure of the value of the United States dollar 
-        relative to a basket of six major foreign currencies. It was established in **March 1973** by 
+        The **U.S. Dollar Index (DXY / USDX)** is a measure of the value of the United States dollar
+        relative to a basket of six major foreign currencies. It was established in **March 1973** by
         the Intercontinental Exchange (ICE) with a base value of **100.000**.
 
-        The DXY is the most widely watched benchmark for the overall strength of the U.S. dollar 
-        in global currency markets. It is used by traders, portfolio managers, central banks, and 
+        The DXY is the most widely watched benchmark for the overall strength of the U.S. dollar
+        in global currency markets. It is used by traders, portfolio managers, central banks, and
         risk managers worldwide.
 
-        #### Currency Basket Composition & Weights
+        **DXY Formula (Geometric Weighted Index):**
         """)
+        st.latex(r"DXY = 50.14348112 \times EURUSD^{-0.576} \times USDJPY^{0.136} \times GBPUSD^{-0.119} \times USDCAD^{0.091} \times USDSEK^{0.042} \times USDCHF^{0.036}")
+
+        st.markdown("#### Currency Basket Composition & Weights")
 
         basket_data = pd.DataFrame({
             "Currency": ["Euro (EUR)", "Japanese Yen (JPY)", "British Pound (GBP)",
                          "Canadian Dollar (CAD)", "Swedish Krona (SEK)", "Swiss Franc (CHF)"],
             "Weight (%)": [57.6, 13.6, 11.9, 9.1, 4.2, 3.6],
             "Country/Region": ["Eurozone", "Japan", "United Kingdom",
-                               "Canada", "Sweden", "Switzerland"]
+                               "Canada", "Sweden", "Switzerland"],
+            "Relationship": ["Inverse", "Direct", "Inverse", "Direct", "Direct", "Direct"]
         })
         st.dataframe(basket_data, use_container_width=True, hide_index=True)
+
+        st.caption("*Inverse = USD strengthens when pair falls | Direct = USD strengthens when pair rises*")
 
     with col2:
         st.markdown("#### Key Facts")
@@ -310,50 +320,374 @@ def tab_about():
             icon="🇪🇺",
             highlight=True
         )
+        st.markdown("")
+        CardDisplay.render_card(
+            title="Historical Range",
+            content="All-time High: 164.72 (Feb 1985) | All-time Low: 70.70 (Mar 2008)",
+            icon="📊"
+        )
 
     st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════
+    # SECTION 2: PROJECT OBJECTIVES
+    # ══════════════════════════════════════════════════════════════════════
+
     st.markdown("#### 🎯 Project Objectives")
 
     obj_col1, obj_col2, obj_col3 = st.columns(3)
     with obj_col1:
         CardDisplay.render_card(
             title="Data Acquisition",
-            content="Fetch real-time & historical DXY data from Yahoo Finance and FRED with flexible date range selection.",
+            content="Fetch real-time & historical DXY data from multiple Yahoo Finance sources with flexible date range and preset period selection.",
             icon="📡"
         )
     with obj_col2:
         CardDisplay.render_card(
             title="Exploratory Analysis",
-            content="Compute descriptive statistics, distribution analysis, trend analysis with moving averages, and volatility profiling.",
+            content="Descriptive statistics, return distributions, normality tests, candlestick charts, moving averages, Bollinger Bands, RSI & volatility profiling.",
             icon="🔍"
         )
     with obj_col3:
         CardDisplay.render_card(
             title="Advanced Analytics",
-            content="Correlation matrix with macro assets, MACD/RSI/Bollinger overlays, rolling beta analysis, and regime detection.",
+            content="Cross-asset correlation matrix, MACD with signal crossovers, max drawdown, monthly return heatmap, VaR/CVaR & Sharpe ratio.",
             icon="📊",
             highlight=True
         )
 
     st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════
+    # SECTION 3: DATA SOURCES
+    # ══════════════════════════════════════════════════════════════════════
+
+    st.markdown("#### 📡 Data Sources")
     st.markdown("""
-    #### 📐 Methodology & Data Sources
+    All three data sources are fetched via **Yahoo Finance** — no API key required:
 
-    This dashboard provides **three data sources** for analysis, all fetched reliably via Yahoo Finance:
+    | # | Source | Yahoo Ticker | Description | Best For |
+    |---|--------|-------------|-------------|----------|
+    | 1 | **DXY Futures** | `DX-Y.NYB` | ICE U.S. Dollar Index Futures contract with full OHLCV data | Standard institutional DXY analysis with volume & candlesticks |
+    | 2 | **Invesco DB USD ETF** | `UUP` | Tracks the Deutsche Bank Long USD Currency Portfolio Index | Tradeable ETF proxy — shows actual invested capital flows |
+    | 3 | **EUR/USD Inverse Proxy** | `EURUSD=X` | EUR/USD spot rate — Euro constitutes 57.6% of DXY basket | Deepest liquidity, longest history, inverse DXY proxy |
 
-    | Source | Ticker | Description |
-    |--------|--------|-------------|
-    | **DXY Futures** | `DX-Y.NYB` | ICE U.S. Dollar Index Futures — the standard institutional DXY benchmark with full OHLCV data |
-    | **Invesco DB USD ETF** | `UUP` | Tracks the Deutsche Bank Long USD Currency Portfolio Index — a tradeable proxy for DXY |
-    | **EUR/USD Inverse Proxy** | `EURUSD=X` | Since the Euro constitutes 57.6% of DXY, EUR/USD moves inversely to the Dollar Index |
+    **Selection Guide:** Use **DXY Futures** for standard analysis. Use **UUP** if you want a tradeable instrument view.
+    Use **EUR/USD** when you need the longest available history or want to see the dominant currency pair driving DXY.
+    """)
 
-    Technical indicators computed include Simple Moving Averages (SMA), Bollinger Bands (±2σ),
-    Relative Strength Index (RSI-14), and MACD (12-26-9). Risk metrics include annualized volatility,
-    Value at Risk (parametric), CVaR / Expected Shortfall, maximum drawdown, and Sharpe ratio calculations.
+    st.markdown("---")
 
+    # ══════════════════════════════════════════════════════════════════════
+    # SECTION 4: SIDEBAR CONTROLS EXPLAINED
+    # ══════════════════════════════════════════════════════════════════════
+
+    st.markdown("#### ⚙️ Sidebar Configuration Guide")
+    st.markdown("The sidebar provides full control over data selection and technical parameters:")
+
+    st.markdown("##### 📅 Period Selection")
+    st.markdown("""
+    Two modes are available:
+
+    | Mode | How It Works |
+    |------|-------------|
+    | **Preset Period** | Choose from 1 Month, 3 Months, 6 Months, 1 Year, 2 Years, 5 Years, 10 Years, or Maximum Available |
+    | **Custom Date Range** | Manually specify exact Start and End dates using the date pickers |
+
+    *Tip: Use "5 Years" for a good balance of trend visibility and data density. Use "Maximum Available" for long-term structural analysis.*
+    """)
+
+    st.markdown("---")
+    st.markdown("##### 📊 Technical Settings")
+    st.markdown("""
+    These two sliders control the **Moving Average (MA) periods** that flow into multiple charts and indicators across the EDA and Advanced Analytics tabs:
+    """)
+
+    ma_col1, ma_col2 = st.columns(2)
+
+    with ma_col1:
+        st.markdown("""
+        **Short MA Window** *(Default: 20 days, Range: 5–50)*
+
+        The **fast-moving Simple Moving Average (SMA)**. It smooths daily price noise and tracks recent momentum.
+        This value also drives the **Bollinger Bands** calculation — the bands are plotted at ±2 standard deviations
+        around this SMA window.
+        """)
+        st.latex(r"SMA_{short} = \frac{1}{n} \sum_{i=0}^{n-1} P_{t-i}")
+        st.markdown("""
+        **Where it appears:**
+        - Gold dashed line on the Price Chart
+        - Center line of Bollinger Bands
+        - Crossover signals with Long MA
+        """)
+
+    with ma_col2:
+        st.markdown("""
+        **Long MA Window** *(Default: 50 days, Range: 50–200)*
+
+        The **slow-moving SMA** capturing the intermediate-to-long-term trend direction.
+        It serves as the trend filter — price above the long MA suggests a bullish regime,
+        price below suggests bearish.
+        """)
+        st.latex(r"SMA_{long} = \frac{1}{m} \sum_{i=0}^{m-1} P_{t-i}")
+        st.markdown("""
+        **Where it appears:**
+        - Red dotted line on the Price Chart
+        - Crossover signals with Short MA
+
+        **Common Pairings:** 10/30 (short-term), 20/50 (default), 50/200 (institutional Golden/Death Cross)
+        """)
+
+    st.info("""
+    💡 **MA Crossover Signals:**
+    When the Short MA crosses **above** the Long MA → **Bullish Signal** (Golden Cross).
+    When the Short MA crosses **below** the Long MA → **Bearish Signal** (Death Cross).
+    The classic institutional signal uses 50/200 — adjust the sliders to test different combinations.
+    """)
+
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════
+    # SECTION 5: TECHNICAL INDICATORS REFERENCE
+    # ══════════════════════════════════════════════════════════════════════
+
+    st.markdown("#### 📐 Technical Indicators Reference")
+    st.markdown("All indicators computed in this dashboard are documented below with their mathematical formulations:")
+
+    # ── Bollinger Bands ──
+    with st.expander("📈 Bollinger Bands (±2σ)", expanded=False):
+        st.markdown("""
+        **Bollinger Bands** measure price volatility by placing envelope bands around a moving average.
+        When prices touch the upper band, the asset may be overbought; when they touch the lower band,
+        it may be oversold. Band width expanding indicates increasing volatility; contracting bands
+        ("Bollinger Squeeze") often precede breakout moves.
+        """)
+        bb_col1, bb_col2 = st.columns(2)
+        with bb_col1:
+            st.latex(r"\text{Upper Band} = SMA_n + k \cdot \sigma_n")
+            st.latex(r"\text{Lower Band} = SMA_n - k \cdot \sigma_n")
+        with bb_col2:
+            st.markdown("""
+            | Parameter | Value |
+            |-----------|-------|
+            | Window (n) | Short MA slider (default: 20) |
+            | Multiplier (k) | 2.0 standard deviations |
+            | Appears in | EDA → Price Chart |
+            """)
+
+    # ── RSI ──
+    with st.expander("📉 Relative Strength Index — RSI (14-Day)", expanded=False):
+        st.markdown("""
+        **RSI** is a momentum oscillator that measures the speed and magnitude of recent price changes
+        to evaluate overbought (>70) or oversold (<30) conditions. It oscillates between 0 and 100.
+        Developed by J. Welles Wilder Jr. (1978).
+        """)
+        rsi_col1, rsi_col2 = st.columns(2)
+        with rsi_col1:
+            st.latex(r"RSI = 100 - \frac{100}{1 + RS}")
+            st.latex(r"RS = \frac{\text{Avg Gain over } n \text{ periods}}{\text{Avg Loss over } n \text{ periods}}")
+        with rsi_col2:
+            st.markdown("""
+            | Parameter | Value |
+            |-----------|-------|
+            | Period (n) | 14 days (standard) |
+            | Overbought | > 70 |
+            | Oversold | < 30 |
+            | Appears in | EDA → RSI Chart |
+            """)
+
+    # ── MACD ──
+    with st.expander("📊 MACD — Moving Average Convergence Divergence (12-26-9)", expanded=False):
+        st.markdown("""
+        **MACD** is a trend-following momentum indicator showing the relationship between two EMAs.
+        The MACD line crossing above the signal line is bullish; crossing below is bearish.
+        The histogram visualizes the distance between MACD and Signal — widening histogram
+        confirms trend strength; narrowing histogram warns of potential reversal.
+        """)
+        macd_col1, macd_col2 = st.columns(2)
+        with macd_col1:
+            st.latex(r"MACD = EMA_{12} - EMA_{26}")
+            st.latex(r"\text{Signal Line} = EMA_9(MACD)")
+            st.latex(r"\text{Histogram} = MACD - \text{Signal Line}")
+        with macd_col2:
+            st.markdown("""
+            | Parameter | Value |
+            |-----------|-------|
+            | Fast EMA | 12 periods |
+            | Slow EMA | 26 periods |
+            | Signal EMA | 9 periods |
+            | Appears in | Advanced Analytics → MACD Chart |
+            """)
+
+    # ── Volatility ──
+    with st.expander("📊 Rolling Volatility (Annualized)", expanded=False):
+        st.markdown("""
+        **Rolling Volatility** measures the standard deviation of daily returns over a rolling window,
+        annualized by multiplying by √252 (trading days per year). Higher values indicate increased
+        uncertainty and risk; lower values indicate calmer markets.
+        """)
+        vol_col1, vol_col2 = st.columns(2)
+        with vol_col1:
+            st.latex(r"\sigma_{annual} = \sigma_{daily} \times \sqrt{252}")
+            st.latex(r"\sigma_{daily} = \text{Std}(r_t, r_{t-1}, \ldots, r_{t-n+1})")
+        with vol_col2:
+            st.markdown("""
+            | Parameter | Value |
+            |-----------|-------|
+            | Rolling Window | 20 trading days |
+            | Annualization | × √252 |
+            | Appears in | EDA → Volatility Chart |
+            """)
+
+    # ── Normality Tests ──
+    with st.expander("🔬 Normality Tests (Jarque-Bera & Shapiro-Wilk)", expanded=False):
+        st.markdown("""
+        Financial returns are tested for normality — a key assumption in many risk models.
+        If returns are **non-normal** (which is typical), standard VaR estimates may understate tail risk.
+        """)
+        norm_col1, norm_col2 = st.columns(2)
+        with norm_col1:
+            st.markdown("**Jarque-Bera Test**")
+            st.latex(r"JB = \frac{n}{6} \left( S^2 + \frac{(K-3)^2}{4} \right)")
+            st.markdown("Tests whether skewness (S) and kurtosis (K) match a normal distribution. p < 0.05 rejects normality.")
+        with norm_col2:
+            st.markdown("**Shapiro-Wilk Test**")
+            st.markdown("""
+            A powerful test for normality based on order statistics. Better suited for smaller samples (n < 5000).
+
+            | Outcome | Interpretation |
+            |---------|---------------|
+            | p > 0.05 | Cannot reject normality |
+            | p < 0.05 | Returns are non-normal |
+            """)
+
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════
+    # SECTION 6: RISK METRICS REFERENCE
+    # ══════════════════════════════════════════════════════════════════════
+
+    st.markdown("#### 🎯 Risk Metrics Reference")
+
+    risk_col1, risk_col2, risk_col3 = st.columns(3)
+
+    with risk_col1:
+        st.markdown("**Value at Risk (VaR) — 95%**")
+        st.latex(r"VaR_{95} = \text{Percentile}_5(r_1, r_2, \ldots, r_n)")
+        st.markdown("""
+        The 5th percentile of daily returns. Interpretation: *"On 95% of trading days,
+        the loss will not exceed this value."* Uses historical (non-parametric) method.
+        """)
+
+    with risk_col2:
+        st.markdown("**Conditional VaR (CVaR / ES)**")
+        st.latex(r"CVaR_{95} = E[r \mid r \leq VaR_{95}]")
+        st.markdown("""
+        Also called **Expected Shortfall**. The average loss on days when VaR is breached.
+        A more conservative measure that captures tail risk better than VaR alone.
+        """)
+
+    with risk_col3:
+        st.markdown("**Sharpe Ratio**")
+        st.latex(r"SR = \frac{R_p - R_f}{\sigma_p} \approx \frac{\bar{r} \times 252}{\sigma \times \sqrt{252}}")
+        st.markdown("""
+        Risk-adjusted return. Assumes risk-free rate ≈ 0 for simplicity.
+        SR > 1.0 is generally considered good; > 2.0 is excellent.
+        """)
+
+    st.markdown("")
+
+    mdd_col1, mdd_col2 = st.columns(2)
+    with mdd_col1:
+        st.markdown("**Maximum Drawdown**")
+        st.latex(r"MDD = \min_t \left( \frac{P_t - \max_{s \leq t} P_s}{\max_{s \leq t} P_s} \right)")
+        st.markdown("The largest peak-to-trough decline in the index level. Measures worst-case capital erosion.")
+
+    with mdd_col2:
+        st.markdown("**Annualized Return & Volatility**")
+        st.latex(r"\mu_{annual} = \bar{r}_{daily} \times 252")
+        st.latex(r"\sigma_{annual} = \sigma_{daily} \times \sqrt{252}")
+        st.markdown("Standard annualization assumes 252 trading days/year.")
+
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════
+    # SECTION 7: CORRELATION ANALYSIS EXPLAINED
+    # ══════════════════════════════════════════════════════════════════════
+
+    st.markdown("#### 🔗 Correlation Analysis — Asset Selection Guide")
+    st.markdown("""
+    The **Correlation Basket** in the sidebar lets you select macro assets to analyze alongside DXY.
+    Correlations are computed on **daily returns** (not price levels) to capture co-movement dynamics:
+    """)
+    st.latex(r"\rho_{XY} = \frac{\text{Cov}(r_X, r_Y)}{\sigma_X \cdot \sigma_Y}")
+
+    corr_ref = pd.DataFrame({
+        "Asset": ["🥇 Gold (GC=F)", "🛢️ Crude Oil (CL=F)", "📈 US 10Y Yield (^TNX)",
+                  "💶 EUR/USD (EURUSD=X)", "💷 GBP/USD (GBPUSD=X)", "💴 USD/JPY (JPY=X)",
+                  "📊 S&P 500 (^GSPC)", "📉 VIX (^VIX)"],
+        "Typical DXY Correlation": ["Strong Negative (–0.5 to –0.8)", "Moderate Negative (–0.2 to –0.5)",
+                                    "Moderate Positive (+0.2 to +0.5)", "Strong Negative (–0.8 to –0.95)",
+                                    "Strong Negative (–0.5 to –0.7)", "Strong Positive (+0.5 to +0.8)",
+                                    "Variable (–0.3 to +0.3)", "Variable (+0.1 to +0.4)"],
+        "Economic Rationale": [
+            "Gold is priced in USD — strong dollar makes gold expensive for foreign buyers",
+            "Oil is dollar-denominated — strong USD depresses commodity prices globally",
+            "Higher yields attract foreign capital inflows → stronger USD demand",
+            "EUR is 57.6% of DXY basket — EUR/USD is mechanically inverse to DXY",
+            "GBP is 11.9% of DXY basket — inverse relationship by construction",
+            "Direct quote — higher USD/JPY = stronger dollar vs yen",
+            "Complex relationship — risk-on/risk-off regimes shift the correlation sign",
+            "USD often rises in flight-to-safety episodes when VIX spikes"
+        ]
+    })
+    st.dataframe(corr_ref, use_container_width=True, hide_index=True)
+
+    st.warning("""
+    ⚠️ **Important:** Correlation is computed on **daily returns**, not price levels.
+    Price-level correlation can be misleading due to non-stationarity (both series may trend upward
+    simply due to time, producing spurious correlation). Return-based correlation captures the
+    true co-movement of price changes.
+    """)
+
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════
+    # SECTION 8: TAB GUIDE
+    # ══════════════════════════════════════════════════════════════════════
+
+    st.markdown("#### 🗂️ Dashboard Tab Guide")
+
+    tab_guide = pd.DataFrame({
+        "Tab": ["📡 Data Fetching", "🔍 EDA Analysis", "📊 Advanced Analytics"],
+        "Contents": [
+            "Data overview metrics, head/tail data preview, data quality checks (missing values, dtypes), descriptive stats, CSV download",
+            "Price chart + MAs + Bollinger Bands, OHLC Candlestick (90d), Returns histogram + Q-Q plot, Jarque-Bera & Shapiro-Wilk normality tests, Rolling volatility, RSI-14",
+            "Correlation heatmap + rankings, MACD with histogram, Maximum drawdown analysis, Monthly returns heatmap, Risk metrics (Sharpe, VaR, CVaR, annualized return/vol)"
+        ],
+        "Key Insight": [
+            "Verify data quality before proceeding — check for missing values and date coverage",
+            "Returns are typically non-normal (fat tails) — standard deviation understates tail risk",
+            "DXY has strong negative correlation with Gold and EUR/USD — key for portfolio hedging decisions"
+        ]
+    })
+    st.dataframe(tab_guide, use_container_width=True, hide_index=True)
+
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════
+    # SECTION 9: DISCLAIMER
+    # ══════════════════════════════════════════════════════════════════════
+
+    st.markdown("""
     #### ⚠️ Disclaimer
-    *This tool is for educational and analytical purposes only. It does not constitute financial advice.
-    Past performance does not guarantee future results.*
+
+    *This tool is developed for **educational and analytical purposes** only under
+    **The Mountain Path — World of Finance** initiative. It does not constitute financial,
+    investment, or trading advice. Past performance does not guarantee future results.
+    All data is sourced from Yahoo Finance and may be subject to delays or inaccuracies.
+    Users should independently verify data and consult qualified financial professionals
+    before making investment decisions.*
     """)
 
 
