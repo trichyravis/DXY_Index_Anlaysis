@@ -53,24 +53,35 @@ HeroHeader.render(
 # ═══════════════════════════════════════════════════════════════════════════════
 
 with st.sidebar:
-    st.markdown("---")
-    st.markdown("### ⚙️ DATA CONFIGURATION")
+    # Sidebar branding header
+    st.markdown("""
+    <div style="text-align:center; padding: 1rem 0 0.5rem 0;">
+        <div style="font-size: 50px; margin-bottom: 5px;">💵</div>
+        <div style="font-size: 16px; font-weight: 900; color: #FFD700; letter-spacing: 1px;">DXY ANALYZER</div>
+        <div style="font-size: 11px; color: rgba(255,255,255,0.7); margin-top: 3px;">Real-Time Dollar Index Analytics</div>
+    </div>
+    """, unsafe_allow_html=True)
+
     st.markdown("---")
 
-    # Data Source Selection
+    # ── Section 1: Data Source ──
+    st.markdown("### 📡 DATA SOURCE")
+
     data_source = st.selectbox(
-        "📡 Data Source",
+        "Select Provider",
         ["Yahoo Finance (DX-Y.NYB)", "FRED (Trade-Weighted USD)"],
-        help="Yahoo Finance provides DXY futures; FRED provides the Trade-Weighted Broad Dollar Index"
+        help="Yahoo Finance provides DXY futures; FRED provides the Trade-Weighted Broad Dollar Index (DTWEXBGS)"
     )
 
     st.markdown("---")
+
+    # ── Section 2: Period Selection ──
     st.markdown("### 📅 PERIOD SELECTION")
 
-    # Period selection
     period_mode = st.radio(
-        "Select Period Mode",
-        ["Preset Period", "Custom Date Range"]
+        "Period Mode",
+        ["Preset Period", "Custom Date Range"],
+        horizontal=True
     )
 
     if period_mode == "Preset Period":
@@ -79,9 +90,9 @@ with st.sidebar:
             ["1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "max"],
             index=3,
             format_func=lambda x: {
-                "1mo": "1 Month", "3mo": "3 Months", "6mo": "6 Months",
-                "1y": "1 Year", "2y": "2 Years", "5y": "5 Years",
-                "10y": "10 Years", "max": "Maximum Available"
+                "1mo": "📌 1 Month", "3mo": "📌 3 Months", "6mo": "📌 6 Months",
+                "1y": "📌 1 Year", "2y": "📌 2 Years", "5y": "📌 5 Years",
+                "10y": "📌 10 Years", "max": "📌 Maximum Available"
             }.get(x, x)
         )
         start_date = None
@@ -90,46 +101,54 @@ with st.sidebar:
         col1, col2 = st.columns(2)
         with col1:
             start_date = st.date_input(
-                "Start Date",
+                "From",
                 value=datetime.now() - timedelta(days=365),
                 max_value=datetime.now()
             )
         with col2:
             end_date = st.date_input(
-                "End Date",
+                "To",
                 value=datetime.now(),
                 max_value=datetime.now()
             )
         period = None
 
     st.markdown("---")
-    st.markdown("### 📊 ANALYSIS SETTINGS")
 
-    # Moving Average windows
-    ma_short = st.slider("Short MA Window (days)", 5, 50, 20)
-    ma_long = st.slider("Long MA Window (days)", 50, 200, 50)
+    # ── Section 3: Technical Settings ──
+    st.markdown("### 📊 TECHNICAL SETTINGS")
 
-    # Correlation assets
+    ma_short = st.slider("Short MA Window", 5, 50, 20, help="Short-term Moving Average period")
+    ma_long = st.slider("Long MA Window", 50, 200, 50, help="Long-term Moving Average period")
+
     st.markdown("---")
-    st.markdown("### 🔗 CORRELATION ASSETS")
+
+    # ── Section 4: Correlation Assets ──
+    st.markdown("### 🔗 CORRELATION BASKET")
+
     corr_assets = st.multiselect(
-        "Select Assets for Correlation",
+        "Select Macro Assets",
         ["GC=F (Gold)", "CL=F (Crude Oil)", "^TNX (US 10Y Yield)",
          "EURUSD=X (EUR/USD)", "GBPUSD=X (GBP/USD)", "JPY=X (USD/JPY)",
          "^GSPC (S&P 500)", "^VIX (Volatility Index)"],
         default=["GC=F (Gold)", "CL=F (Crude Oil)", "^TNX (US 10Y Yield)",
-                 "EURUSD=X (EUR/USD)", "^GSPC (S&P 500)"]
+                 "EURUSD=X (EUR/USD)", "^GSPC (S&P 500)"],
+        help="Assets to include in the correlation matrix with DXY"
     )
 
     st.markdown("---")
+
+    # ── Execute Button ──
     run_btn = st.button("🚀 EXECUTE ANALYSIS", use_container_width=True)
 
     st.markdown("---")
+
+    # ── Footer Branding ──
     st.markdown("""
-    <div style="text-align:center; font-size:12px; opacity:0.8;">
-        <p>🏔️ <b>The Mountain Path</b></p>
-        <p>World of Finance</p>
-        <p>Prof. V. Ravichandran</p>
+    <div style="text-align:center; padding: 0.5rem 0;">
+        <div style="font-size: 13px; font-weight: 700; color: #FFD700;">🏔️ THE MOUNTAIN PATH</div>
+        <div style="font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 3px;">World of Finance</div>
+        <div style="font-size: 10px; color: rgba(255,255,255,0.5); margin-top: 2px;">Prof. V. Ravichandran</div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -155,15 +174,41 @@ def fetch_yahoo_data(period=None, start=None, end=None):
 
 @st.cache_data(ttl=3600, show_spinner=False)
 def fetch_fred_data(start=None, end=None):
-    """Fetch Trade-Weighted USD Index from FRED via pandas_datareader"""
+    """Fetch Trade-Weighted USD Index from FRED via direct API (no pandas_datareader needed)"""
+    import requests
     try:
-        import pandas_datareader.data as web
+        FRED_API_KEY = "DEMO_KEY"  # Replace with your own key from https://fred.stlouisfed.org/docs/api/api_key.html
+        series_id = "DTWEXBGS"
         if start is None:
             start = datetime(2015, 1, 1)
         if end is None:
             end = datetime.now()
-        df = web.DataReader("DTWEXBGS", "fred", start, end)
-        df.columns = ["Close"]
+
+        url = (
+            f"https://api.stlouisfed.org/fred/series/observations"
+            f"?series_id={series_id}"
+            f"&api_key={FRED_API_KEY}"
+            f"&file_type=json"
+            f"&observation_start={start.strftime('%Y-%m-%d') if isinstance(start, datetime) else start}"
+            f"&observation_end={end.strftime('%Y-%m-%d') if isinstance(end, datetime) else end}"
+        )
+        resp = requests.get(url, timeout=15)
+        resp.raise_for_status()
+        data = resp.json()
+
+        observations = data.get("observations", [])
+        if not observations:
+            raise ValueError("No observations returned from FRED API.")
+
+        records = []
+        for obs in observations:
+            if obs["value"] != ".":
+                records.append({
+                    "Date": pd.to_datetime(obs["date"]),
+                    "Close": float(obs["value"])
+                })
+
+        df = pd.DataFrame(records).set_index("Date")
         df["Open"] = df["Close"]
         df["High"] = df["Close"]
         df["Low"] = df["Close"]
@@ -171,8 +216,11 @@ def fetch_fred_data(start=None, end=None):
         df = df[["Open", "High", "Low", "Close", "Volume"]]
         df.dropna(inplace=True)
         return df
+
     except Exception as e:
-        st.error(f"FRED fetch failed: {e}. Falling back to Yahoo Finance.")
+        st.error(f"⚠️ FRED API fetch failed: {e}")
+        st.info("💡 **Tip:** For full FRED access, get a free API key at https://fred.stlouisfed.org/docs/api/api_key.html and replace `DEMO_KEY` in the code.")
+        st.warning("Falling back to Yahoo Finance (DX-Y.NYB)...")
         return fetch_yahoo_data(period="5y")
 
 
